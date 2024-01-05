@@ -4,6 +4,7 @@ import { Auth } from "./Auth";
 init({
   appId: import.meta.env.VITE_INSTANT_APP_ID,
   websocketURI: "wss://api.instantdb.com/runtime/session",
+  // @ts-expect-error
   apiURI: "https://api.instantdb.com",
 });
 
@@ -39,7 +40,9 @@ export default function App() {
 
   function deleteAll() {
     transact(
-      Object.keys(data).flatMap((k) => data[k].map((e) => tx[k][e.id].delete()))
+      Object.keys(data).flatMap((k) =>
+        data[k].map((e: { id: string }) => tx[k][e.id].delete())
+      )
     );
   }
 
@@ -138,7 +141,7 @@ export default function App() {
         <button onClick={() => addLog(1)}>
           5. Add log to second team and metric
         </button>
-        <button onClick={() => deleteAll(data)}>Delete everything</button>
+        <button onClick={() => deleteAll()}>Delete everything</button>
       </div>
     </main>
   );
