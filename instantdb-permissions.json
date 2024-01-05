@@ -1,6 +1,6 @@
 {
   "teams": {
-    "bind": ["member", "auth.id in data.ref('users')"],
+    "bind": ["member", "auth.id in data.ref('members')"],
     "allow": {
       "view": "member",
       "create": "true",
