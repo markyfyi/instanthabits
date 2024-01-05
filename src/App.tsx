@@ -13,20 +13,14 @@ export default function App() {
 
   const { isLoading, error, data } = useQuery({
     metrics: {},
-    members: {},
     logs: {},
     teams: {
       metrics: {
         teams: {},
       },
-
-      members: {
-        logs: {
-          metrics: {
-            teams: {
-              members: {},
-            },
-          },
+      logs: {
+        metrics: {
+          teams: {},
         },
       },
     },
@@ -51,38 +45,28 @@ export default function App() {
   }
 
   function createTeams() {
+    if (!userId) return;
     const teamId = id();
-    const memberId = id();
 
     const otherTeamId = id();
-    const otherMemberId = id();
+    const otherUserId = id();
 
     transact([
       tx.teams[teamId].update({
         name: "fam",
+        members: [userId],
       }),
-
-      tx.members[memberId].update({
-        user: userId,
-      }),
-
-      tx.teams[teamId].link({ members: memberId }),
 
       tx.teams[otherTeamId].update({
         name: "other team",
+        members: [otherUserId],
       }),
-      tx.members[otherMemberId].update({
-        user: id(),
-      }),
-      tx.teams[otherTeamId].link({ members: otherMemberId }),
     ]);
   }
 
   function addMetric(i: number) {
     const team = data.teams[i];
     if (!team || !userId) return;
-
-    console.log({ team, userId });
 
     const metricId = id();
 
@@ -97,8 +81,8 @@ export default function App() {
 
   function addLog(i: number) {
     const metric = data.teams[i].metrics[0];
-    const member = data.teams[i].members[0];
-    if (!metric || !member || !userId) return;
+    const memberId = data.teams[i].members[0];
+    if (!metric || !memberId || !userId) return;
 
     const logId = id();
 
@@ -106,10 +90,10 @@ export default function App() {
       tx.logs[logId].update({
         value: 175,
         timestamp: new Date().toISOString(),
+        memberId,
       }),
 
       tx.metrics[metric.id].link({ logs: logId }),
-      tx.logs[logId].link({ members: member.id }),
     ]);
   }
 
