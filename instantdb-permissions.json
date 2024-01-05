@@ -1,0 +1,11 @@
+{
+  "log": {
+    "bind": ["member", "auth.id in data.ref('metrics.teams.members')"],
+    "allow": {
+      "view": "member",
+      "create": "true",
+      "delete": "member",
+      "update": "member"
+    }
+  }
+}
