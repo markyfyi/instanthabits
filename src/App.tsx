@@ -13,6 +13,7 @@ export default function App() {
 
   const { isLoading, error, data } = useQuery({
     metrics: {},
+    members: {},
     logs: {},
     teams: {
       members: {},
