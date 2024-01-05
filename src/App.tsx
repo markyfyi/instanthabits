@@ -15,6 +15,7 @@ export default function App() {
     metrics: {},
     logs: {},
     teams: {
+      members: {},
       metrics: {
         teams: {},
       },
@@ -52,15 +53,20 @@ export default function App() {
     const otherUserId = id();
 
     transact([
-      tx.teams[teamId].update({
-        name: "fam",
-        members: [userId],
-      }),
+      tx.members[userId].update({}),
+      tx.members[otherUserId].update({}),
 
-      tx.teams[otherTeamId].update({
-        name: "other team",
-        members: [otherUserId],
-      }),
+      tx.teams[teamId]
+        .update({
+          name: "fam",
+        })
+        .link({ members: userId }),
+
+      tx.teams[otherTeamId]
+        .update({
+          name: "other team",
+        })
+        .link({ members: otherUserId }),
     ]);
   }
 
