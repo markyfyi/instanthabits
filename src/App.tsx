@@ -111,7 +111,7 @@ export default function App() {
         {JSON.stringify(
           {
             userId,
-            teams: data?.teams ?? [],
+            teams: data?.teams ?? null,
           },
           null,
           "  "
