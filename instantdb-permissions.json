@@ -1,6 +1,6 @@
 {
   "log": {
-    "bind": ["member", "auth.id in data.ref('metrics.teams.members')"],
+    "bind": ["member", "auth.id in data.ref('metrics.teams.members.user')"],
     "allow": {
       "view": "member",
       "create": "true",

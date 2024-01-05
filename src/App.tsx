@@ -16,6 +16,10 @@ export default function App() {
     members: {},
     logs: {},
     teams: {
+      metrics: {
+        teams: {},
+      },
+
       members: {
         logs: {
           metrics: {
@@ -78,6 +82,8 @@ export default function App() {
     const team = data.teams[i];
     if (!team || !userId) return;
 
+    console.log({ team, userId });
+
     const metricId = id();
 
     transact([
@@ -90,8 +96,8 @@ export default function App() {
   }
 
   function addLog(i: number) {
-    const metric = data.metrics[i];
-    const member = data.members[i];
+    const metric = data.teams[i].metrics[0];
+    const member = data.teams[i].members[0];
     if (!metric || !member || !userId) return;
 
     const logId = id();
@@ -135,12 +141,8 @@ export default function App() {
         <button onClick={() => addMetric(1)}>
           3. Add metric to second team
         </button>
-        <button onClick={() => addLog(0)}>
-          4. Add log to first team and metric
-        </button>
-        <button onClick={() => addLog(1)}>
-          5. Add log to second team and metric
-        </button>
+        <button onClick={() => addLog(0)}>4. Add log to first team</button>
+        <button onClick={() => addLog(1)}>5. Add log to second team</button>
         <button onClick={() => deleteAll()}>Delete everything</button>
       </div>
     </main>
