@@ -4,7 +4,6 @@ import { Auth } from "./Auth";
 init({
   appId: import.meta.env.VITE_INSTANT_APP_ID,
   websocketURI: "wss://api.instantdb.com/runtime/session",
-  // @ts-expect-error
   apiURI: "https://api.instantdb.com",
 });
 
@@ -29,11 +28,11 @@ const query = {
 };
 
 export default function App() {
-  const { user, isLoading: isAuthLodaing, error: authError } = useAuth();
+  const { user, isLoading: isAuthLoading, error: authError } = useAuth();
   const { isLoading, error: queryError, data } = useQuery(query);
   const userId = user?.id;
 
-  if (isLoading || isAuthLodaing) {
+  if (isLoading || isAuthLoading) {
     return null;
   }
   if (queryError) {
