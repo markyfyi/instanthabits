@@ -8,35 +8,78 @@ init({
   apiURI: "https://api.instantdb.com",
 });
 
-export default function App() {
-  const { user, isLoading: isAuthLodaing } = useAuth();
-
-  const { isLoading, error, data } = useQuery({
-    metrics: {},
+const query = {
+  logs: {
     members: {},
-    logs: {},
-    teams: {
-      members: {},
+    metrics: {},
+  },
+  members: {},
+  metrics: {},
+  teams: {
+    members: {},
+    metrics: {
+      teams: {},
+    },
+    logs: {
       metrics: {
         teams: {},
       },
-      logs: {
-        metrics: {
-          teams: {},
-        },
-      },
     },
-  });
+  },
+};
 
+export default function App() {
+  const { user, isLoading: isAuthLodaing, error: authError } = useAuth();
+  const { isLoading, error: queryError, data } = useQuery(query);
   const userId = user?.id;
 
-  if (isAuthLodaing) {
+  if (isLoading || isAuthLodaing) {
     return null;
   }
-
+  if (queryError) {
+    return <div>{queryError.message}</div>;
+  }
+  if (authError) {
+    return <div>{authError.message}</div>;
+  }
   if (!userId) {
     return <Auth />;
   }
+
+  return (
+    <main style={{ margin: "0 auto", maxWidth: "24rem" }}>
+      <h1>Instant Habits</h1>
+      <pre
+        style={{
+          border: "1px lightgray solid",
+          padding: "1rem",
+          maxHeight: "18rem",
+          overflow: "auto",
+        }}
+      >
+        {JSON.stringify(
+          {
+            userId,
+            ...data,
+          },
+          null,
+          "  "
+        )}
+      </pre>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
+        <button onClick={createTeams}>1. Create teams</button>
+        <button onClick={() => addMetric(0)}>
+          2. Add metric to first team
+        </button>
+        <button onClick={() => addMetric(1)}>
+          3. Add metric to second team
+        </button>
+        <button onClick={() => addLog(0)}>4. Add log to first team</button>
+        <button onClick={() => addLog(1)}>5. Add log to second team</button>
+        <button onClick={() => deleteAll()}>Delete everything</button>
+      </div>
+    </main>
+  );
 
   function deleteAll() {
     transact(
@@ -49,7 +92,6 @@ export default function App() {
   function createTeams() {
     if (!userId) return;
     const teamId = id();
-
     const otherTeamId = id();
     const otherUserId = id();
 
@@ -73,7 +115,7 @@ export default function App() {
 
   function addMetric(i: number) {
     const team = data.teams[i];
-    if (!team || !userId) return;
+    if (!team) return;
 
     const metricId = id();
 
@@ -88,8 +130,8 @@ export default function App() {
 
   function addLog(i: number) {
     const metric = data.teams[i].metrics[0];
-    const memberId = data.teams[i].members[0];
-    if (!metric || !memberId || !userId) return;
+    const member = data.teams[i].members[0];
+    if (!metric || !member) return;
 
     const logId = id();
 
@@ -97,45 +139,10 @@ export default function App() {
       tx.logs[logId].update({
         value: 175,
         timestamp: new Date().toISOString(),
-        memberId,
       }),
 
-      tx.metrics[metric.id].link({ logs: logId }),
+      tx.logs[logId].link({ metrics: metric.id }),
+      tx.logs[logId].link({ members: member.id }),
     ]);
   }
-
-  return (
-    <main style={{ margin: "0 auto", maxWidth: "24rem" }}>
-      <h1>Instant Habits</h1>
-      <pre
-        style={{
-          border: "1px lightgray solid",
-          padding: "1rem",
-          maxHeight: "18rem",
-          overflow: "auto",
-        }}
-      >
-        {JSON.stringify(
-          {
-            userId,
-            teams: data?.teams ?? null,
-          },
-          null,
-          "  "
-        )}
-      </pre>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        <button onClick={createTeams}>1. Create teams</button>
-        <button onClick={() => addMetric(0)}>
-          2. Add metric to first team
-        </button>
-        <button onClick={() => addMetric(1)}>
-          3. Add metric to second team
-        </button>
-        <button onClick={() => addLog(0)}>4. Add log to first team</button>
-        <button onClick={() => addLog(1)}>5. Add log to second team</button>
-        <button onClick={() => deleteAll()}>Delete everything</button>
-      </div>
-    </main>
-  );
 }
