@@ -16,4 +16,4 @@ const res = await fetch(
   }
 );
 
-console.log(res.ok);
+console.log(res.ok ? "ok" : "failed");
