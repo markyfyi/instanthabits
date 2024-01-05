@@ -7,19 +7,14 @@ init({
   apiURI: "https://api.instantdb.com",
 });
 
+const dbTypes = ["logs", "members", "metrics", "teams"] as const;
+
 const query = {
-  logs: {
-    members: {},
-    metrics: {},
-  },
-  members: {},
-  metrics: {},
   teams: {
     members: {},
-    metrics: {
-      teams: {},
-    },
+    metrics: {},
     logs: {
+      members: {},
       metrics: {
         teams: {},
       },
@@ -30,6 +25,9 @@ const query = {
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
   const { isLoading, error: queryError, data } = useQuery(query);
+  const { data: allItemsData } = useQuery(
+    Object.fromEntries(dbTypes.map((k) => [k, {}]))
+  );
   const userId = user?.id;
 
   if (isLoading || isAuthLoading) {
@@ -50,7 +48,9 @@ export default function App() {
       <h1>Instant Habits</h1>
       <pre
         style={{
+          fontSize: "0.7rem",
           border: "1px lightgray solid",
+          backgroundColor: "#fafafa",
           padding: "1rem",
           maxHeight: "18rem",
           overflow: "auto",
@@ -82,8 +82,8 @@ export default function App() {
 
   function deleteAll() {
     transact(
-      Object.keys(data).flatMap((k) =>
-        data[k].map((e: { id: string }) => tx[k][e.id].delete())
+      Object.keys(allItemsData).flatMap((k) =>
+        allItemsData[k].map((e: { id: string }) => tx[k][e.id].delete())
       )
     );
   }
@@ -95,19 +95,25 @@ export default function App() {
     const otherUserId = id();
 
     transact([
-      tx.members[userId].update({}),
-      tx.members[otherUserId].update({}),
+      tx.members[userId].update({
+        nickname: "marky",
+      }),
 
-      tx.teams[teamId]
-        .update({
-          name: "fam",
-        })
-        .link({ members: userId }),
+      tx.members[otherUserId].update({
+        nickname: "stopa",
+      }),
 
       tx.teams[otherTeamId]
         .update({
           name: "other team",
         })
+        .link({ members: otherUserId }),
+
+      tx.teams[teamId]
+        .update({
+          name: "fam",
+        })
+        .link({ members: userId })
         .link({ members: otherUserId }),
     ]);
   }
@@ -128,8 +134,11 @@ export default function App() {
   }
 
   function addLog(i: number) {
-    const metric = data.teams[i].metrics[0];
-    const member = data.teams[i].members[0];
+    const team = data.teams[i];
+    if (!team) return;
+
+    const metric = team.metrics[0];
+    const member = team.members[0];
     if (!metric || !member) return;
 
     const logId = id();
@@ -140,6 +149,7 @@ export default function App() {
         timestamp: new Date().toISOString(),
       }),
 
+      tx.teams[team.id].link({ logs: logId }),
       tx.logs[logId].link({ metrics: metric.id }),
       tx.logs[logId].link({ members: member.id }),
     ]);
