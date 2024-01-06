@@ -143,17 +143,19 @@ const query = {
 
 const debug_allDataQuery = {
   teams: {
-    metrics: {
-      logs: {
-        members: {},
+    members: {
+      metrics: {
+        logs: {
+          members: {},
+        },
       },
     },
   },
-  logs: {},
-  metrics: {},
   members: {
     teams: {
       members: {},
     },
   },
+  logs: {},
+  metrics: {},
 };
