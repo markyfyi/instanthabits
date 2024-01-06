@@ -9,7 +9,7 @@
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "ip": "node ./scripts/instantdb-permisssions-sync.js",
-    "ipw": "nodemon -w instantdb-permissions.json -x \"pnpm run ip push\""
+    "ipw": "nodemon -w instantdb-permissions.json -x \"$npm_execpath run ip push\""
   },
   "dependencies": {
     "@instantdb/react": "^0.5.4",
