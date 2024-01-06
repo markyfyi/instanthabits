@@ -7,5 +7,32 @@
       "delete": "member",
       "update": "member"
     }
+  },
+  "members": {
+    "bind": ["teammate", "auth.id in data.ref('teams.members.id')"],
+    "allow": {
+      "view": "teammate",
+      "create": "true",
+      "delete": "false",
+      "update": "false"
+    }
+  },
+  "metrics": {
+    "bind": ["member", "auth.id in data.ref('teams.members.id')"],
+    "allow": {
+      "view": "member",
+      "create": "true",
+      "delete": "member",
+      "update": "member"
+    }
+  },
+  "logs": {
+    "bind": ["member", "auth.id in data.ref('members.id')"],
+    "allow": {
+      "view": "member",
+      "create": "true",
+      "delete": "member",
+      "update": "member"
+    }
   }
 }

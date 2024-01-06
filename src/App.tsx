@@ -1,13 +1,19 @@
 import { init, useQuery, id, transact, tx, useAuth } from "@instantdb/react";
 import { Auth } from "./Auth";
 
-init({
-  appId: import.meta.env.VITE_INSTANT_APP_ID,
+const appId = import.meta.env.VITE_INSTANT_APP_ID;
+
+const instantSettings = {
   websocketURI: "wss://api.instantdb.com/runtime/session",
   apiURI: "https://api.instantdb.com",
+};
+
+init({
+  ...instantSettings,
+  appId,
 });
 
-const dbTypes = ["logs", "members", "metrics", "teams"] as const;
+const allDbTypes = ["logs", "members", "metrics", "teams"] as const;
 
 const query = {
   teams: {
@@ -25,9 +31,19 @@ const query = {
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
   const { isLoading, error: queryError, data } = useQuery(query);
-  const { data: allItemsData } = useQuery(
-    Object.fromEntries(dbTypes.map((k) => [k, {}]))
-  );
+  const { data: allItemsData } = useQuery({
+    teams: {},
+    logs: {},
+    metrics: {},
+    members: {
+      teams: {
+        members: {},
+      },
+    },
+  });
+
+  console.log(allItemsData);
+
   const userId = user?.id;
 
   if (isLoading || isAuthLoading) {
@@ -92,29 +108,35 @@ export default function App() {
     if (!userId) return;
     const teamId = id();
     const otherTeamId = id();
-    const otherUserId = id();
+    const userId2 = id();
+    const userId3 = id();
 
     transact([
       tx.members[userId].update({
         nickname: "marky",
       }),
 
-      tx.members[otherUserId].update({
+      tx.members[userId2].update({
         nickname: "stopa",
+      }),
+
+      tx.members[userId3].update({
+        nickname: "joeski",
       }),
 
       tx.teams[otherTeamId]
         .update({
           name: "other team",
         })
-        .link({ members: otherUserId }),
+        .link({ members: userId2 })
+        .link({ members: userId3 }),
 
       tx.teams[teamId]
         .update({
           name: "fam",
         })
         .link({ members: userId })
-        .link({ members: otherUserId }),
+        .link({ members: userId2 }),
     ]);
   }
 

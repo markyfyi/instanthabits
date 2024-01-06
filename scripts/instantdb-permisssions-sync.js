@@ -10,6 +10,7 @@ const cmd = process.argv[2];
 if (!cmd) {
   console.error("Error: No command provided, specify `pull` or `push`");
 } else if (cmd === "pull") {
+  console.log("PULLING PERMISSIONS FROM INSTANT");
   const data = (
     await fetch("https://api.instantdb.com/dash/apps", {
       method: "GET",
@@ -24,6 +25,7 @@ if (!cmd) {
   writeFileSync(filePath, JSON.stringify(data, null, "\t"), "utf-8");
   console.log("OK");
 } else if (cmd === "push") {
+  console.log("PUSHING PERMISSIONS TO INSTANT");
   const code = JSON.parse(readFileSync(filePath, "utf8"));
 
   const res = await fetch(
