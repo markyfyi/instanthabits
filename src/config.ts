@@ -5,4 +5,9 @@ export const instantSettings = {
   apiURI: "https://api.instantdb.com",
 };
 
-const allDbEntityTypes = ["logs", "members", "metrics", "teams"] as const;
+export const allDbEntityTypes = [
+  "logs",
+  "members",
+  "metrics",
+  "teams",
+] as const;
