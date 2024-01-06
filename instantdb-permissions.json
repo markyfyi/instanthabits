@@ -6,7 +6,7 @@
       "$notes": "view set to true until bug is fixed",
       "view": "true",
       "create": "true",
-      "delete": "false",
+      "delete": "true",
       "update": "false"
     }
   },

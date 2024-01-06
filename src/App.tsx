@@ -1,48 +1,10 @@
-import { init, useQuery, id, transact, tx, useAuth } from "@instantdb/react";
+import { useQuery, id, transact, tx, useAuth } from "@instantdb/react";
 import { Auth } from "./Auth";
-
-const appId = import.meta.env.VITE_INSTANT_APP_ID;
-
-const instantSettings = {
-  websocketURI: "wss://api.instantdb.com/runtime/session",
-  apiURI: "https://api.instantdb.com",
-};
-
-init({
-  ...instantSettings,
-  appId,
-});
-
-const allDbTypes = ["logs", "members", "metrics", "teams"] as const;
-
-const query = {
-  teams: {
-    members: {},
-    metrics: {},
-    logs: {
-      members: {},
-      metrics: {
-        teams: {},
-      },
-    },
-  },
-};
 
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
   const { isLoading, error: queryError, data } = useQuery(query);
-  const { data: allItemsData } = useQuery({
-    teams: {},
-    logs: {},
-    metrics: {},
-    members: {
-      teams: {
-        members: {},
-      },
-    },
-  });
-
-  console.log(allItemsData);
+  const { data: debug_allItemsData } = useQuery(debug_allDataQuery);
 
   const userId = user?.id;
 
@@ -76,40 +38,35 @@ export default function App() {
           {
             userId,
             ...data,
+            debug_allItemsData,
           },
           null,
           "  "
         )}
       </pre>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        <button onClick={createTeams}>1. Create teams</button>
-        <button onClick={() => addMetric(0)}>
-          2. Add metric to first team
-        </button>
-        <button onClick={() => addMetric(1)}>
-          3. Add metric to second team
-        </button>
-        <button onClick={() => addLog(0)}>4. Add log to first team</button>
-        <button onClick={() => addLog(1)}>5. Add log to second team</button>
-        <button onClick={() => deleteAll()}>Delete everything</button>
+        <button onClick={initTeams}>1. Create teams, members, metrics</button>
+        <button onClick={() => addLog(0)}>2. Add log</button>
+        <button onClick={() => debug_deleteAll()}>💥 Delete everything</button>
       </div>
     </main>
   );
 
-  function deleteAll() {
+  function debug_deleteAll() {
     transact(
-      Object.keys(allItemsData).flatMap((k) =>
-        allItemsData[k].map((e: { id: string }) => tx[k][e.id].delete())
+      Object.keys(debug_allItemsData).flatMap((k) =>
+        debug_allItemsData[k].map((e: { id: string }) => tx[k][e.id].delete())
       )
     );
   }
 
-  function createTeams() {
+  function initTeams() {
     if (!userId) return;
     const teamId = id();
     const otherTeamId = id();
     const userId2 = id();
     const userId3 = id();
+    const metricId = id();
 
     transact([
       tx.members[userId].update({
@@ -123,6 +80,15 @@ export default function App() {
       tx.members[userId3].update({
         nickname: "joeski",
       }),
+
+      tx.metrics[metricId].update({
+        name: "Weight",
+      }),
+
+      tx.teams[teamId].link({ metrics: metricId }),
+
+      tx.members[userId].link({ metrics: metricId }),
+      tx.members[userId2].link({ metrics: metricId }),
 
       tx.teams[otherTeamId]
         .update({
@@ -140,28 +106,12 @@ export default function App() {
     ]);
   }
 
-  function addMetric(i: number) {
-    const team = data.teams[i];
-    if (!team) return;
-
-    const metricId = id();
-
-    transact([
-      tx.metrics[metricId].update({
-        name: "Weight",
-      }),
-
-      tx.teams[team.id].link({ metrics: metricId }),
-    ]);
-  }
-
   function addLog(i: number) {
     const team = data.teams[i];
     if (!team) return;
 
     const metric = team.metrics[0];
-    const member = team.members[0];
-    if (!metric || !member) return;
+    if (!metric || !userId) return;
 
     const logId = id();
 
@@ -173,7 +123,37 @@ export default function App() {
 
       tx.teams[team.id].link({ logs: logId }),
       tx.logs[logId].link({ metrics: metric.id }),
-      tx.logs[logId].link({ members: member.id }),
+      tx.logs[logId].link({ members: userId }),
     ]);
   }
 }
+
+const query = {
+  teams: {
+    members: {},
+    metrics: {},
+    logs: {
+      members: {},
+      metrics: {
+        teams: {},
+      },
+    },
+  },
+};
+
+const debug_allDataQuery = {
+  teams: {
+    metrics: {
+      logs: {
+        members: {},
+      },
+    },
+  },
+  logs: {},
+  metrics: {},
+  members: {
+    teams: {
+      members: {},
+    },
+  },
+};

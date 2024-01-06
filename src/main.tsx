@@ -1,10 +1,17 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./App.tsx";
+import "./index.css";
+import { init } from "@instantdb/react";
+import { instantSettings, appId } from "./config.ts";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+init({
+  ...instantSettings,
+  appId,
+});
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <App />
-  </React.StrictMode>,
-)
+  </React.StrictMode>
+);
