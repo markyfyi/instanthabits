@@ -4,7 +4,7 @@
     "bind": ["teammate", "auth.id in data.ref('teams.members.id')"],
     "allow": {
       "$notes": "view set to true until bug is fixed",
-      "view": "true",
+      "view": "teammate",
       "create": "true",
       "delete": "true",
       "update": "false"

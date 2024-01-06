@@ -1,8 +1,9 @@
 export const appId = import.meta.env.VITE_INSTANT_APP_ID;
 
 export const instantSettings = {
-  websocketURI: "wss://api.instantdb.com/runtime/session",
-  apiURI: "https://api.instantdb.com",
+  websocketURI: import.meta.env.VITE_INSTANT_WEBSOCKET_URI ||
+    "wss://api.instantdb.com/runtime/session",
+  apiURI: import.meta.env.VITE_INSTANT_API_URI || "https://api.instantdb.com",
 };
 
 export const allDbEntityTypes = [
