@@ -1,9 +1,8 @@
 {
-  "$notes": "create and delete are set to true for development purposes",
+  "_notes": "create and delete are set to true across the board for development purposes",
   "members": {
     "bind": ["teammate", "auth.id in data.ref('teams.members.id')"],
     "allow": {
-      "$notes": "view set to true until bug is fixed",
       "view": "teammate",
       "create": "true",
       "delete": "true",
