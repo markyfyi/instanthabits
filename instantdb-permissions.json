@@ -1,20 +1,22 @@
 {
+  "$notes": "create and delete are set to true for development purposes",
+  "members": {
+    "bind": ["teammate", "auth.id in data.ref('teams.members.id')"],
+    "allow": {
+      "$notes": "view set to true until bug is fixed",
+      "view": "true",
+      "create": "true",
+      "delete": "false",
+      "update": "false"
+    }
+  },
   "teams": {
     "bind": ["member", "auth.id in data.ref('members.id')"],
     "allow": {
       "view": "member",
       "create": "true",
-      "delete": "member",
+      "delete": "true",
       "update": "member"
-    }
-  },
-  "members": {
-    "bind": ["teammate", "auth.id in data.ref('teams.members.id')"],
-    "allow": {
-      "view": "teammate",
-      "create": "true",
-      "delete": "false",
-      "update": "false"
     }
   },
   "metrics": {
@@ -22,7 +24,7 @@
     "allow": {
       "view": "member",
       "create": "true",
-      "delete": "member",
+      "delete": "true",
       "update": "member"
     }
   },
@@ -31,7 +33,7 @@
     "allow": {
       "view": "member",
       "create": "true",
-      "delete": "member",
+      "delete": "true",
       "update": "member"
     }
   }
