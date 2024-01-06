@@ -8,7 +8,7 @@
       "update": "member"
     }
   },
-  "_members": {
+  "members": {
     "bind": ["teammate", "auth.id in data.ref('teams.members.id')"],
     "allow": {
       "view": "teammate",
