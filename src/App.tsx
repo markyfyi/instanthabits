@@ -3,7 +3,11 @@ import { Auth } from "./Auth";
 
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
-  const { isLoading, error: queryError, data } = useQuery(query);
+  const {
+    isLoading,
+    error: queryError,
+    data,
+  } = useQuery(teamsQuery({ memberId: user?.id }));
   const { data: debug_allItemsData } = useQuery(debug_allDataQuery);
 
   const userId = user?.id;
@@ -22,32 +26,33 @@ export default function App() {
   }
 
   return (
-    <main style={{ margin: "0 auto", maxWidth: "24rem" }}>
-      <h1>Instant Habits</h1>
-      <pre
-        style={{
-          fontSize: "0.7rem",
-          border: "1px lightgray solid",
-          backgroundColor: "#fafafa",
-          padding: "1rem",
-          maxHeight: "18rem",
-          overflow: "auto",
-        }}
-      >
-        {JSON.stringify(
-          {
-            userId,
-            ...data,
-            debug_allItemsData,
-          },
-          null,
-          "  "
-        )}
-      </pre>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-        <button onClick={initTeams}>1. Create teams, members, metrics</button>
-        <button onClick={() => addLog(0)}>2. Add log</button>
-        <button onClick={() => debug_deleteAll()}>💥 Delete everything</button>
+    <main className="py-2 flex flex-col gap-2 mx-auto max-w-md">
+      <h1 className="text-lg font-bold">Instant Habits</h1>
+      {data.teams.map((team: any, i: number) => (
+        <div key={team.id}>
+          <h2>{team.name}</h2>
+          {team.members.map((member: any) => (
+            <div key={member.id}>
+              <h3>{member.nickname}</h3>
+              <MemberLogs memberId={member.id} />
+            </div>
+          ))}
+        </div>
+      ))}
+      <div className="flex flex-col gap-2 mt-8 p-4 bg-slate-200 rounded-sm">
+        <h3>Debug zone</h3>
+        <div className="flex flex-col gap-1">
+          <button className="btn" onClick={initTeams}>
+            1. Create teams, members, metrics
+          </button>
+          <button className="btn" onClick={() => addLog(0)}>
+            2. Add log
+          </button>
+          <button className="btn" onClick={() => debug_deleteAll()}>
+            💥 Delete everything
+          </button>
+        </div>
+        <Debug data={debug_allDataQuery} />
       </div>
     </main>
   );
@@ -128,18 +133,60 @@ export default function App() {
   }
 }
 
-const query = {
-  teams: {
-    members: {},
-    metrics: {},
-    logs: {
+function MemberLogs({ memberId }: { memberId: string }) {
+  const { isLoading, error, data } = useQuery(metricsQuery({ memberId }));
+
+  if (isLoading) {
+    return null;
+  }
+  if (error) {
+    return <div>{error.message}</div>;
+  }
+
+  return <Debug data={data} />;
+}
+
+function Debug(props: any) {
+  return (
+    <pre
+      className="font-mono p-4 text-xs overflow-auto max-h-60"
+      style={{
+        border: "1px lightgray solid",
+        backgroundColor: "#fafafa",
+        padding: "1rem",
+      }}
+    >
+      {JSON.stringify(props, null, "  ")}
+    </pre>
+  );
+}
+
+function teamsQuery({ memberId }: { memberId?: string }) {
+  return {
+    teams: {
+      $: {
+        where: { "members.id": memberId },
+      },
       members: {},
-      metrics: {
-        teams: {},
+      metrics: {},
+    },
+  };
+}
+
+function metricsQuery({ memberId }: { memberId: string }) {
+  return {
+    metrics: {
+      $: {
+        where: { "members.id": memberId },
+      },
+      logs: {
+        $: {
+          where: { "members.id": memberId },
+        },
       },
     },
-  },
-};
+  };
+}
 
 const debug_allDataQuery = {
   teams: {
