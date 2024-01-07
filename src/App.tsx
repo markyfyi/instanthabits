@@ -169,8 +169,6 @@ function MemberLogs({
     return <div>{error.message}</div>;
   }
 
-  console.log(member);
-
   return (
     <div>
       <h3>{member.nickname}</h3>
