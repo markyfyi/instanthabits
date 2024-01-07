@@ -1,6 +1,6 @@
 import { id, transact, tx, useAuth } from "@instantdb/react";
 import { Auth } from "./Auth";
-import { useQuery } from "./util/useQuery";
+import { InstantObject, useQuery } from "./util/instant";
 
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
@@ -8,7 +8,16 @@ export default function App() {
     isLoading: isTeamsLoading,
     error: queryError,
     data: teamsData,
-  } = useQuery(teamsQuery({ memberId: user?.id }));
+  } = useQuery({
+    teams: {
+      $: {
+        where: { "members.id": user?.id },
+      },
+      metrics: {
+        members: {},
+      },
+    },
+  });
 
   const { data: debug_allItemsData } = useQuery(debug_allDataQuery);
 
@@ -29,20 +38,22 @@ export default function App() {
 
   return (
     <main className="py-2 flex flex-col gap-2 mx-auto max-w-md">
-      <h1 className="text-lg font-bold">Instant Habits</h1>
-      {teamsData?.teams.map((team: any) => (
+      <h1 className="text-xl font-bold">Instant Habits</h1>
+      {teamsData?.teams.map((team) => (
         <div key={team.id}>
-          <h2>{team.name}</h2>
-          {team.members.map((member: any) => (
-            <div key={member.id}>
-              <h3>{member.nickname}</h3>
-              <MemberLogs memberId={member.id} />
+          <h2 className="text-lg font-bold">{team.name}</h2>
+          {team.metrics.map((metric) => (
+            <div key={metric.id}>
+              <h3>{metric.name}</h3>
+              {metric.members.map((member) => (
+                <MemberLogs key={member.id} member={member} metric={metric} />
+              ))}
             </div>
           ))}
         </div>
       ))}
       <div className="flex flex-col gap-2 mt-8 p-4 bg-slate-200 rounded-sm">
-        <h3>Debug zone</h3>
+        <h3 className="text-lg font-bold">Debug zone</h3>
         <div className="flex flex-col gap-1">
           <button className="btn" onClick={initTeams}>
             1. Create teams, members, metrics
@@ -135,17 +146,43 @@ export default function App() {
   }
 }
 
-function MemberLogs({ memberId }: { memberId: string }) {
-  const { isLoading, error, data } = useQuery(metricsQuery({ memberId }));
+function MemberLogs({
+  member,
+  metric,
+}: {
+  member: InstantObject;
+  metric: InstantObject;
+}) {
+  const { isLoading, error, data } = useQuery({
+    logs: {
+      $: {
+        where: { "members.id": member.id, "metrics.id": metric.id },
+      },
+    },
+  });
 
   if (isLoading) {
     return null;
   }
+
   if (error) {
     return <div>{error.message}</div>;
   }
 
-  return <Debug data={data} />;
+  console.log(member);
+
+  return (
+    <div>
+      <h3>{member.nickname}</h3>
+      <div>
+        {data.logs.map((log) => (
+          <div>
+            {dateFromatter.format(new Date(log.timestamp))}: {log.value}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 function Debug(props: any) {
@@ -161,33 +198,6 @@ function Debug(props: any) {
       {JSON.stringify(props, null, "  ")}
     </pre>
   );
-}
-
-function teamsQuery({ memberId }: { memberId?: string }) {
-  return {
-    teams: {
-      $: {
-        where: { "members.id": memberId },
-      },
-      members: {},
-      metrics: {},
-    },
-  };
-}
-
-function metricsQuery({ memberId }: { memberId: string }) {
-  return {
-    metrics: {
-      $: {
-        where: { "members.id": memberId },
-      },
-      logs: {
-        $: {
-          where: { "members.id": memberId },
-        },
-      },
-    },
-  };
 }
 
 const debug_allDataQuery = {
@@ -208,3 +218,9 @@ const debug_allDataQuery = {
   logs: {},
   metrics: {},
 };
+
+const dateFromatter = new Intl.DateTimeFormat("en-US", {
+  year: "2-digit",
+  month: "2-digit",
+  day: "2-digit",
+});
