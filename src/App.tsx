@@ -1,18 +1,20 @@
-import { useQuery, id, transact, tx, useAuth } from "@instantdb/react";
+import { id, transact, tx, useAuth } from "@instantdb/react";
 import { Auth } from "./Auth";
+import { useQuery } from "./util/useQuery";
 
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
   const {
-    isLoading,
+    isLoading: isTeamsLoading,
     error: queryError,
-    data,
+    data: teamsData,
   } = useQuery(teamsQuery({ memberId: user?.id }));
+
   const { data: debug_allItemsData } = useQuery(debug_allDataQuery);
 
   const userId = user?.id;
 
-  if (isLoading || isAuthLoading) {
+  if (isTeamsLoading || isAuthLoading) {
     return null;
   }
   if (queryError) {
@@ -28,7 +30,7 @@ export default function App() {
   return (
     <main className="py-2 flex flex-col gap-2 mx-auto max-w-md">
       <h1 className="text-lg font-bold">Instant Habits</h1>
-      {data.teams.map((team: any, i: number) => (
+      {teamsData?.teams.map((team: any) => (
         <div key={team.id}>
           <h2>{team.name}</h2>
           {team.members.map((member: any) => (
@@ -59,8 +61,8 @@ export default function App() {
 
   function debug_deleteAll() {
     transact(
-      Object.keys(debug_allItemsData).flatMap((k) =>
-        debug_allItemsData[k].map((e: { id: string }) => tx[k][e.id].delete())
+      Object.entries(debug_allItemsData ?? {}).flatMap(([k, v]) =>
+        v.map((e: { id: string }) => tx[k][e.id].delete())
       )
     );
   }
@@ -112,7 +114,7 @@ export default function App() {
   }
 
   function addLog(i: number) {
-    const team = data.teams[i];
+    const team = teamsData?.teams[i];
     if (!team) return;
 
     const metric = team.metrics[0];
