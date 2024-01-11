@@ -19,7 +19,7 @@ export default function App() {
     },
   });
 
-  const { data: debug_allItemsData } = useQuery(debug_allDataQuery);
+  const { data: debug_allItemsData } = useQuery(allDataQuery__debug);
 
   const userId = user?.id;
 
@@ -43,17 +43,13 @@ export default function App() {
         <div key={team.id}>
           <h2 className="text-lg font-bold">{team.name}</h2>
           {team.metrics.map((metric) => (
-            <div key={metric.id}>
-              <h3>{metric.name}</h3>
-              {metric.members.map((member) => (
-                <MemberLogs key={member.id} member={member} metric={metric} />
-              ))}
-            </div>
+            <MetricsLogs key={metric.id} metric={metric} />
           ))}
         </div>
       ))}
-      <div className="flex flex-col gap-2 mt-8 p-4 bg-slate-200 rounded-sm">
-        <h3 className="text-lg font-bold">Debug zone</h3>
+
+      <div className="w-96 h-96 flex flex-col gap-2 p-4 bg-slate-200 rounded-sm fixed bottom-0 right-0">
+        <h3 className="text-lg font-bold">Instant debug zone</h3>
         <div className="flex flex-col gap-1">
           <button className="btn" onClick={initTeams}>
             1. Create teams, members, metrics
@@ -65,7 +61,7 @@ export default function App() {
             💥 Delete everything
           </button>
         </div>
-        <Debug data={debug_allDataQuery} />
+        <Debug data={debug_allItemsData} />
       </div>
     </main>
   );
@@ -82,31 +78,35 @@ export default function App() {
     if (!userId) return;
     const teamId = id();
     const otherTeamId = id();
+    const userId1 = userId;
     const userId2 = id();
     const userId3 = id();
-    const metricId = id();
+
+    function addMemberOps(nickname: string) {
+      return [
+        tx.members[userId1].update({
+          nickname,
+        }),
+      ];
+    }
+
+    function addMetricOps(name: string) {
+      const metricId = id();
+      return [
+        tx.metrics[metricId].update({
+          name,
+        }),
+
+        tx.members[userId1].link({ metrics: metricId }),
+        tx.teams[teamId].link({ metrics: metricId }),
+        tx.members[userId2].link({ metrics: metricId }),
+      ];
+    }
 
     transact([
-      tx.members[userId].update({
-        nickname: "marky",
-      }),
-
-      tx.members[userId2].update({
-        nickname: "stopa",
-      }),
-
-      tx.members[userId3].update({
-        nickname: "joeski",
-      }),
-
-      tx.metrics[metricId].update({
-        name: "Weight",
-      }),
-
-      tx.teams[teamId].link({ metrics: metricId }),
-
-      tx.members[userId].link({ metrics: metricId }),
-      tx.members[userId2].link({ metrics: metricId }),
+      ...addMemberOps("marky"),
+      ...addMemberOps("stopa"),
+      ...addMemberOps("joeski"),
 
       tx.teams[otherTeamId]
         .update({
@@ -119,8 +119,14 @@ export default function App() {
         .update({
           name: "fam",
         })
-        .link({ members: userId })
+        .link({ members: userId1 })
         .link({ members: userId2 }),
+
+      ...addMetricOps("Weight"),
+      ...addMetricOps("Sleep"),
+      ...addMetricOps("Skincare"),
+      ...addMetricOps("Train"),
+      ...addMetricOps("Climb"),
     ]);
   }
 
@@ -135,7 +141,7 @@ export default function App() {
 
     transact([
       tx.logs[logId].update({
-        value: 175,
+        value: 100,
         timestamp: new Date().toISOString(),
       }),
 
@@ -146,19 +152,48 @@ export default function App() {
   }
 }
 
-function MemberLogs({
-  member,
-  metric,
+function useLogsQuerys__WorkkaroundPleaseFix({
+  metricId,
 }: {
-  member: InstantObject;
-  metric: InstantObject;
+  metricId: string;
 }) {
-  const { isLoading, error, data } = useQuery({
+  // // FIXME: multiple clauses please! @stopachka @nezaj 🙏
+  // useQuery({
+  //   logs: {
+  //     $: {
+  //       where: { "members.id": member.id, "metrics.id": metric.id },
+  //     },
+  //   },
+  // });
+
+  const result = useQuery({
     logs: {
       $: {
-        where: { "members.id": member.id, "metrics.id": metric.id },
+        where: { "metrics.id": metricId },
       },
+      members: {},
     },
+  });
+
+  console.log(result.data?.logs);
+
+  return {
+    workaround: {
+      logsByMemberId: groupBy(
+        result.data?.logs ?? [],
+        (log) => log.members[0].id
+      ),
+    },
+    result,
+  };
+}
+
+function MetricsLogs({ metric }: { metric: InstantObject }) {
+  const {
+    result: { isLoading, error, data },
+    workaround: { logsByMemberId },
+  } = useLogsQuerys__WorkkaroundPleaseFix({
+    metricId: metric.id,
   });
 
   if (isLoading) {
@@ -170,15 +205,26 @@ function MemberLogs({
   }
 
   return (
-    <div>
-      <h3>{member.nickname}</h3>
-      <div>
-        {data.logs.map((log) => (
-          <div>
-            {dateFromatter.format(new Date(log.timestamp))}: {log.value}
+    <div key={metric.id} className="mb-4">
+      <h3>{metric.name}</h3>
+      {Object.values(logsByMemberId).map((logs) => {
+        const member = logs[0]?.members[0];
+        // this should never happen
+        if (!member) return null;
+
+        return (
+          <div key={metric.id} className="mb-4">
+            <h3>{member.nickname}</h3>
+            <div>
+              {logs.map((log) => (
+                <div key={log.id}>
+                  {dateFromatter.format(new Date(log.timestamp))}: {log.value}
+                </div>
+              ))}
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })}
     </div>
   );
 }
@@ -198,22 +244,12 @@ function Debug(props: any) {
   );
 }
 
-const debug_allDataQuery = {
-  teams: {
-    members: {
-      metrics: {
-        logs: {
-          members: {},
-        },
-      },
-    },
+const allDataQuery__debug = {
+  logs: {
+    metrics: {},
   },
-  members: {
-    teams: {
-      members: {},
-    },
-  },
-  logs: {},
+  members: {},
+  teams: {},
   metrics: {},
 };
 
@@ -222,3 +258,17 @@ const dateFromatter = new Intl.DateTimeFormat("en-US", {
   month: "2-digit",
   day: "2-digit",
 });
+
+function groupBy<T, K extends keyof any>(
+  array: T[],
+  getKey: (item: T) => K
+): Record<K, T[]> {
+  return array.reduce((result, currentItem) => {
+    const key = getKey(currentItem);
+    if (!result[key]) {
+      result[key] = [];
+    }
+    result[key].push(currentItem);
+    return result;
+  }, {} as Record<K, T[]>);
+}
