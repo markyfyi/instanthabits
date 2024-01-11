@@ -9,6 +9,7 @@ export default function App() {
     isLoading: isTeamsLoading,
     error: queryError,
     data: teamsData,
+    instantDebugRef,
   } = useQuery({
     teams: {
       $: {
@@ -20,7 +21,7 @@ export default function App() {
     },
   });
 
-  const { data: debug_allItemsData, debugRef: allItemsDebugRef } =
+  const { data: debug_allItemsData, instantDebugRef: allItemsDebugRef } =
     useQuery(allDataQuery__debug);
 
   const userId = user?.id;
@@ -40,19 +41,21 @@ export default function App() {
 
   return (
     <main className="py-2 flex flex-col gap-2 mx-auto max-w-md">
-      <h1 className="text-xl font-bold">Instant Habits</h1>
-      {teamsData?.teams.map((team) => (
-        <div key={team.id}>
-          <h2 className="text-lg font-bold">{team.name}</h2>
-          {team.metrics.map((metric) => (
-            <MetricsLogs key={metric.id} metric={metric} />
-          ))}
-        </div>
-      ))}
+      <div ref={instantDebugRef}>
+        <h1 className="text-xl font-bold">Instant Habits</h1>
+        {teamsData?.teams.map((team) => (
+          <div key={team.id}>
+            <h2 className="text-lg font-bold">{team.name}</h2>
+            {team.metrics.map((metric) => (
+              <MetricsLogs key={metric.id} metric={metric} />
+            ))}
+          </div>
+        ))}
+      </div>
 
       <div
         ref={allItemsDebugRef}
-        className="w-96 h-96 flex flex-col gap-2 p-4 bg-slate-200 rounded-sm fixed bottom-0 right-0"
+        className="w-96 max-h-96 flex flex-col gap-2 p-4 bg-slate-200 rounded-sm fixed bottom-0 right-0"
       >
         <h3 className="text-lg font-bold">Instant debug zone</h3>
         <div className="flex flex-col gap-1">
@@ -66,7 +69,6 @@ export default function App() {
             💥 Delete everything
           </button>
         </div>
-        <Debug data={debug_allItemsData} />
       </div>
     </main>
   );
@@ -231,22 +233,6 @@ function MetricsLogs({ metric }: { metric: InstantObject }) {
     </div>
   );
 }
-
-const Debug = forwardRef(function (props: any, ref: any) {
-  return (
-    <pre
-      ref={ref}
-      className="font-mono p-4 text-xs overflow-auto max-h-60"
-      style={{
-        border: "1px lightgray solid",
-        backgroundColor: "#fafafa",
-        padding: "1rem",
-      }}
-    >
-      {JSON.stringify(props, null, "  ")}
-    </pre>
-  );
-});
 
 const allDataQuery__debug = {
   logs: {
