@@ -1,6 +1,7 @@
 import { id, transact, tx, useAuth } from "@instantdb/react";
 import { Auth } from "./Auth";
 import { InstantObject, useQuery } from "./util/instant";
+import { RefObject, forwardRef } from "react";
 
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
@@ -19,7 +20,8 @@ export default function App() {
     },
   });
 
-  const { data: debug_allItemsData } = useQuery(allDataQuery__debug);
+  const { data: debug_allItemsData, debugRef: allItemsDebugRef } =
+    useQuery(allDataQuery__debug);
 
   const userId = user?.id;
 
@@ -48,7 +50,10 @@ export default function App() {
         </div>
       ))}
 
-      <div className="w-96 h-96 flex flex-col gap-2 p-4 bg-slate-200 rounded-sm fixed bottom-0 right-0">
+      <div
+        ref={allItemsDebugRef}
+        className="w-96 h-96 flex flex-col gap-2 p-4 bg-slate-200 rounded-sm fixed bottom-0 right-0"
+      >
         <h3 className="text-lg font-bold">Instant debug zone</h3>
         <div className="flex flex-col gap-1">
           <button className="btn" onClick={initTeams}>
@@ -175,8 +180,6 @@ function useLogsQuerys__WorkkaroundPleaseFix({
     },
   });
 
-  console.log(result.data?.logs);
-
   return {
     workaround: {
       logsByMemberId: groupBy(
@@ -229,9 +232,10 @@ function MetricsLogs({ metric }: { metric: InstantObject }) {
   );
 }
 
-function Debug(props: any) {
+const Debug = forwardRef(function (props: any, ref: any) {
   return (
     <pre
+      ref={ref}
       className="font-mono p-4 text-xs overflow-auto max-h-60"
       style={{
         border: "1px lightgray solid",
@@ -242,7 +246,7 @@ function Debug(props: any) {
       {JSON.stringify(props, null, "  ")}
     </pre>
   );
-}
+});
 
 const allDataQuery__debug = {
   logs: {

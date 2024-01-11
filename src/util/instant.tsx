@@ -1,5 +1,6 @@
 import { useQuery as useQuery_ } from "@instantdb/react";
 import { InstantSchema } from "../instant-schema";
+import { MutableRefObject, RefObject, useLayoutEffect, useRef } from "react";
 
 // Deeply converts each property of the object (and nested objects) to arrays with 'id'
 type Responsify<T> = {
@@ -12,8 +13,33 @@ type Responsify<T> = {
     : T[P][];
 };
 
-export function useQuery<T>(q: T) {
-  return useQuery_<Responsify<T>>(q);
+export function useQuery<T>(q: T): ReturnType<
+  typeof useQuery_<Responsify<T>>
+> & {
+  debugRef: MutableRefObject<HTMLElement | undefined>;
+} {
+  const r = useQuery_<Responsify<T>>(q);
+
+  const debugRef = useRef<HTMLElement>();
+
+  useLayoutEffect(() => {
+    const el = debugRef.current;
+    if (!(el instanceof HTMLElement)) return;
+    function debug() {
+      // soon... ;)
+    }
+
+    el.addEventListener("mouseenter", debug);
+
+    return () => {
+      el.removeEventListener("mouseenter", debug);
+    };
+  });
+
+  return {
+    ...r,
+    debugRef,
+  };
 }
 
 export type InstantObject<T = unknown> = {
