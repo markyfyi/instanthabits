@@ -16,11 +16,11 @@ type Responsify<T> = {
 export function useQuery<T>(q: T): ReturnType<
   typeof useQuery_<Responsify<T>>
 > & {
-  debugRef: MutableRefObject<HTMLElement | undefined>;
+  debugRef: RefObject<any>;
 } {
   const r = useQuery_<Responsify<T>>(q);
 
-  const debugRef = useRef<HTMLElement>();
+  const debugRef = useRef<HTMLElement>(null);
 
   useLayoutEffect(() => {
     const el = debugRef.current;
