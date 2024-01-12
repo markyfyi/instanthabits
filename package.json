@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@instantdb/react": "^0.5.4",
-    "react": "link:@@instantdb/react",
+    "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },
   "devDependencies": {
