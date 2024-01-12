@@ -89,10 +89,11 @@ export default function App() {
     const userId2 = id();
     const userId3 = id();
 
-    function addMemberOps(id: string, nickname: string) {
+    function addMemberOps(id: string, nickname: string, isAdmin?: boolean) {
       return [
         tx.members[id].update({
           nickname,
+          isAdmin,
         }),
       ];
     }
@@ -111,7 +112,7 @@ export default function App() {
     }
 
     transact([
-      ...addMemberOps(userId1, "marky"),
+      ...addMemberOps(userId1, "marky", true),
       ...addMemberOps(userId2, "stopa"),
       ...addMemberOps(userId3, "joeski"),
 
