@@ -83,7 +83,7 @@ export default function App() {
 
       <div
         ref={allItemsDebugRef}
-        className="w-96 max-h-96 flex flex-col gap-2 p-4 bg-slate-200 rounded-sm fixed bottom-0 right-0"
+        className="w-96 max-h-96 flex flex-col overflow-auto shadow gap-2 p-6 bg-white border rounded-sm fixed bottom-0 right-0"
       >
         <h3 className="text-lg font-bold">Instant debug zone</h3>
         <div className="flex flex-col gap-1">
