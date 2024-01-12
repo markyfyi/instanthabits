@@ -1,7 +1,6 @@
 import { useQuery as useQuery_ } from "@instantdb/react";
 import { InstantSchema } from "../instant-schema";
 import {
-  MutableRefObject,
   ReactNode,
   RefObject,
   forwardRef,

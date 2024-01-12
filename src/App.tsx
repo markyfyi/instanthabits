@@ -1,7 +1,6 @@
 import { id, transact, tx, useAuth } from "@instantdb/react";
 import { Auth } from "./Auth";
 import { InstantObject, useQuery } from "./util/instant";
-import { RefObject, forwardRef } from "react";
 
 export default function App() {
   const { user, isLoading: isAuthLoading, error: authError } = useAuth();
@@ -21,7 +20,7 @@ export default function App() {
     },
   });
 
-  const { data: debug_allItemsData, instantDebugRef: allItemsDebugRef } =
+  const { data: allItemsData_debug, instantDebugRef: allItemsDebugRef } =
     useQuery(allDataQuery__debug);
 
   const userId = user?.id;
@@ -42,10 +41,39 @@ export default function App() {
   return (
     <main className="py-2 mx-auto max-w-md">
       <div className="flex flex-col gap-2" ref={instantDebugRef}>
-        <h1 className="text-xl font-bold">Instant Habits</h1>
+        <h1 className="text-2xl font-bold">Instant Habits</h1>
         {teamsData?.teams.map((team) => (
-          <div key={team.id} className="flex flex-col gap-2">
-            <h2 className="text-lg font-bold mb-2">{team.name}</h2>
+          <div key={team.id} className="flex flex-col gap-4">
+            <h2 className="text-xl font-bold">{team.name}</h2>
+
+            <div className="flex flex-col gap-1 border rounded p-2">
+              <h4 className="font-bold">Add a member</h4>
+              <form
+                className="flex gap-2"
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const form = e.target as HTMLFormElement;
+                  // @ts-expect-error elements key
+                  const email = form.elements.namedItem("email")?.value;
+                  if (!email) return;
+
+                  addMember(email);
+
+                  form.reset();
+                }}
+              >
+                <input
+                  className="input"
+                  name="email"
+                  type="email"
+                  placeholder="Email"
+                />
+                <button className="btn" type="submit">
+                  Add
+                </button>
+              </form>
+            </div>
+
             {team.metrics.map((metric) => (
               <MetricsLogs key={metric.id} userId={userId} metric={metric} />
             ))}
@@ -59,13 +87,13 @@ export default function App() {
       >
         <h3 className="text-lg font-bold">Instant debug zone</h3>
         <div className="flex flex-col gap-1">
-          <button className="btn" onClick={initTeams}>
+          <button className="btn" onClick={initTeams_debug}>
             1. Create teams, members, metrics
           </button>
-          <button className="btn" onClick={() => addLog(0)}>
+          <button className="btn" onClick={() => addLog_debug(0)}>
             2. Add log
           </button>
-          <button className="btn" onClick={() => debug_deleteAll()}>
+          <button className="btn" onClick={() => deleteAll_debug()}>
             💥 Delete everything
           </button>
         </div>
@@ -73,15 +101,23 @@ export default function App() {
     </main>
   );
 
-  function debug_deleteAll() {
+  function addMember(email: string) {
+    /**
+     * TODO:
+     * - need to migrate to a `memberships` join table - members are keyed by user id, but can have different roles in different teams
+     * - possibly `invitations` tables too depending on how fancy we want to get
+     */
+  }
+
+  function deleteAll_debug() {
     transact(
-      Object.entries(debug_allItemsData ?? {}).flatMap(([k, v]) =>
+      Object.entries(allItemsData_debug ?? {}).flatMap(([k, v]) =>
         v.map((e: { id: string }) => tx[k][e.id].delete())
       )
     );
   }
 
-  function initTeams() {
+  function initTeams_debug() {
     if (!userId) return;
     const teamId = id();
     const otherTeamId = id();
@@ -138,7 +174,7 @@ export default function App() {
     ]);
   }
 
-  function addLog(i: number) {
+  function addLog_debug(i: number) {
     const team = teamsData?.teams[i];
     if (!team) return;
 
@@ -160,40 +196,6 @@ export default function App() {
   }
 }
 
-function useLogsQuerys__WorkkaroundPleaseFix({
-  metricId,
-}: {
-  metricId: string;
-}) {
-  // // FIXME: multiple clauses please! @stopachka @nezaj 🙏
-  // useQuery({
-  //   logs: {
-  //     $: {
-  //       where: { "members.id": member.id, "metrics.id": metric.id },
-  //     },
-  //   },
-  // });
-
-  const result = useQuery({
-    logs: {
-      $: {
-        where: { "metrics.id": metricId },
-      },
-      members: {},
-    },
-  });
-
-  return {
-    workaround: {
-      logsByMemberId: groupBy(
-        result.data?.logs ?? [],
-        (log) => log.members[0].id
-      ),
-    },
-    result,
-  };
-}
-
 function MetricsLogs({
   metric,
   userId,
@@ -204,7 +206,7 @@ function MetricsLogs({
   const {
     result: { isLoading, error, data },
     workaround: { logsByMemberId },
-  } = useLogsQuerys__WorkkaroundPleaseFix({
+  } = useLogsQuerys_workaroundPleaseFix({
     metricId: metric.id,
   });
 
@@ -236,7 +238,7 @@ function MetricsLogs({
           }}
         >
           <input
-            className="rounded w-full py-2 px-4 text-gray-700 border"
+            className="input"
             name="value"
             type="text"
             placeholder="Value"
@@ -253,7 +255,7 @@ function MetricsLogs({
         if (!member) return null;
 
         return (
-          <div key={metric.id} className="mb-4">
+          <div key={metric.id}>
             <h4 className="font-bold">{member.nickname}</h4>
             <div>
               {logs.map((log) => (
@@ -280,6 +282,36 @@ function MetricsLogs({
       tx.logs[logId].link({ members: userId }),
     ]);
   }
+}
+
+function useLogsQuerys_workaroundPleaseFix({ metricId }: { metricId: string }) {
+  // // FIXME: multiple clauses please! @stopachka @nezaj 🙏
+  // useQuery({
+  //   logs: {
+  //     $: {
+  //       where: { "members.id": member.id, "metrics.id": metric.id },
+  //     },
+  //   },
+  // });
+
+  const result = useQuery({
+    logs: {
+      $: {
+        where: { "metrics.id": metricId },
+      },
+      members: {},
+    },
+  });
+
+  return {
+    workaround: {
+      logsByMemberId: groupBy(
+        result.data?.logs ?? [],
+        (log) => log.members[0].id
+      ),
+    },
+    result,
+  };
 }
 
 const allDataQuery__debug = {
