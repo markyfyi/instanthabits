@@ -7,13 +7,13 @@ settings:
 dependencies:
   '@instantdb/react':
     specifier: ^0.5.4
-    version: 0.5.4(react@18.2.0)
+    version: 0.5.4(react@@@instantdb+react)
   react:
-    specifier: ^18.2.0
-    version: 18.2.0
+    specifier: link:@@instantdb/react
+    version: link:@@instantdb/react
   react-dom:
     specifier: ^18.2.0
-    version: 18.2.0(react@18.2.0)
+    version: 18.2.0(react@@@instantdb+react)
 
 devDependencies:
   '@types/react':
@@ -346,13 +346,13 @@ packages:
       uuid: 9.0.1
     dev: false
 
-  /@instantdb/react@0.5.4(react@18.2.0):
+  /@instantdb/react@0.5.4(react@@@instantdb+react):
     resolution: {integrity: sha512-lmkVC2dzYgkpfcD2eIygFXQdk9YHJgNF8Efh06WTXsQQoUtKsfn81zFt5LYYMDQch5wvx8vs14/ZMBdlzqPk1w==}
     peerDependencies:
       react: '>=16'
     dependencies:
       '@instantdb/core': 0.5.4
-      react: 18.2.0
+      react: link:@@instantdb/react
     dev: false
 
   /@isaacs/cliui@8.0.2:
@@ -1869,21 +1869,14 @@ packages:
     resolution: {integrity: sha512-NuaNSa6flKT5JaSYQzJok04JzTL1CA6aGhv5rfLW3PgqA+M2ChpZQnAC8h8i4ZFkBS8X5RqkDBHA7r4hej3K9A==}
     dev: true
 
-  /react-dom@18.2.0(react@18.2.0):
+  /react-dom@18.2.0(react@@@instantdb+react):
     resolution: {integrity: sha512-6IMTriUmvsjHUjNtEDudZfuDQUoWXVxKHhlEGSk81n4YFS+r/Kl99wXiwlVXtPBtJenozv2P+hxDsw9eA7Xo6g==}
     peerDependencies:
       react: ^18.2.0
     dependencies:
       loose-envify: 1.4.0
-      react: 18.2.0
+      react: link:@@instantdb/react
       scheduler: 0.23.0
-    dev: false
-
-  /react@18.2.0:
-    resolution: {integrity: sha512-/3IjMdb2L9QbBdWiW5e3P2/npwMBaU9mHCSCUzNln0ZCYbcfTsGbTJrU/kGemdH2IWmB2ioZ+zkxtmq6g09fGQ==}
-    engines: {node: '>=0.10.0'}
-    dependencies:
-      loose-envify: 1.4.0
     dev: false
 
   /read-cache@1.0.0:

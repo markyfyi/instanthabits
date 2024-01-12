@@ -8,7 +8,6 @@ import {
   useLayoutEffect,
   useRef,
 } from "react";
-import { createPortal } from "react-dom";
 import { Root, createRoot } from "react-dom/client";
 
 let debugMode = false;
