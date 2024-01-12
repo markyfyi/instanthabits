@@ -40,14 +40,14 @@ export default function App() {
   }
 
   return (
-    <main className="py-2 flex flex-col gap-2 mx-auto max-w-md">
-      <div ref={instantDebugRef}>
+    <main className="py-2 mx-auto max-w-md">
+      <div className="flex flex-col gap-2" ref={instantDebugRef}>
         <h1 className="text-xl font-bold">Instant Habits</h1>
         {teamsData?.teams.map((team) => (
-          <div key={team.id}>
-            <h2 className="text-lg font-bold">{team.name}</h2>
+          <div key={team.id} className="flex flex-col gap-2">
+            <h2 className="text-lg font-bold mb-2">{team.name}</h2>
             {team.metrics.map((metric) => (
-              <MetricsLogs key={metric.id} metric={metric} />
+              <MetricsLogs key={metric.id} userId={userId} metric={metric} />
             ))}
           </div>
         ))}
@@ -89,9 +89,9 @@ export default function App() {
     const userId2 = id();
     const userId3 = id();
 
-    function addMemberOps(nickname: string) {
+    function addMemberOps(id: string, nickname: string) {
       return [
-        tx.members[userId1].update({
+        tx.members[id].update({
           nickname,
         }),
       ];
@@ -111,9 +111,9 @@ export default function App() {
     }
 
     transact([
-      ...addMemberOps("marky"),
-      ...addMemberOps("stopa"),
-      ...addMemberOps("joeski"),
+      ...addMemberOps(userId1, "marky"),
+      ...addMemberOps(userId2, "stopa"),
+      ...addMemberOps(userId3, "joeski"),
 
       tx.teams[otherTeamId]
         .update({
@@ -193,7 +193,13 @@ function useLogsQuerys__WorkkaroundPleaseFix({
   };
 }
 
-function MetricsLogs({ metric }: { metric: InstantObject }) {
+function MetricsLogs({
+  metric,
+  userId,
+}: {
+  metric: InstantObject;
+  userId: string;
+}) {
   const {
     result: { isLoading, error, data },
     workaround: { logsByMemberId },
@@ -210,8 +216,36 @@ function MetricsLogs({ metric }: { metric: InstantObject }) {
   }
 
   return (
-    <div key={metric.id} className="mb-4">
-      <h3>{metric.name}</h3>
+    <div key={metric.id} className="flex flex-col gap-2">
+      <h3 className="font-bold">{metric.name}</h3>
+
+      <div>
+        <form
+          className="flex gap-2"
+          onSubmit={(e) => {
+            e.preventDefault();
+            const form = e.target as HTMLFormElement;
+            // @ts-expect-error elements key
+            const value = parseInt(form.elements.namedItem("value")?.value);
+            if (isNaN(value)) return;
+
+            addLog(value);
+
+            form.reset();
+          }}
+        >
+          <input
+            className="rounded w-full py-2 px-4 text-gray-700 border"
+            name="value"
+            type="text"
+            placeholder="Value"
+          />
+          <button className="btn" type="submit">
+            Log
+          </button>
+        </form>
+      </div>
+
       {Object.values(logsByMemberId).map((logs) => {
         const member = logs[0]?.members[0];
         // this should never happen
@@ -219,7 +253,7 @@ function MetricsLogs({ metric }: { metric: InstantObject }) {
 
         return (
           <div key={metric.id} className="mb-4">
-            <h3>{member.nickname}</h3>
+            <h4 className="font-bold">{member.nickname}</h4>
             <div>
               {logs.map((log) => (
                 <div key={log.id}>
@@ -232,6 +266,19 @@ function MetricsLogs({ metric }: { metric: InstantObject }) {
       })}
     </div>
   );
+
+  function addLog(value: any) {
+    const logId = id();
+
+    transact([
+      tx.logs[logId].update({
+        value,
+        timestamp: new Date().toISOString(),
+      }),
+      tx.logs[logId].link({ metrics: metric.id }),
+      tx.logs[logId].link({ members: userId }),
+    ]);
+  }
 }
 
 const allDataQuery__debug = {
